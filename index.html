@@ -57,9 +57,103 @@ footer{padding:45px 0 34px;border-top:1px solid rgba(255,255,255,.08);color:var(
 <footer>© 2026 Apsiy Ai — plateforme premium de création de vidéos par intelligence artificielle.</footer>
 </div>
 <script>
-const btn=document.getElementById('generate'),status=document.getElementById('status'),txt=document.getElementById('statusText'),bar=document.getElementById('bar');
-btn.addEventListener('click',()=>{const p=document.getElementById('prompt').value.trim();if(!p){alert('Écris d’abord une description de ta vidéo.');return}status.style.display='block';btn.disabled=true;const steps=[['Analyse de la scène…',22],['Création du storyboard IA…',48],['Stylisation premium…',76],['Prévisualisation prête — API vidéo à connecter.',100]];let i=0;const next=()=>{txt.textContent=steps[i][0];bar.style.width=steps[i][1]+'%';i++;if(i<steps.length)setTimeout(next,900);else setTimeout(()=>btn.disabled=false,1000)};next()});
-const tilt=document.getElementById('tilt');
-if(window.matchMedia('(pointer:fine)').matches){tilt.addEventListener('mousemove',e=>{const r=tilt.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;tilt.style.transform=`rotateX(${-y*5}deg) rotateY(${x*6}deg) translateZ(0)`});tilt.addEventListener('mouseleave',()=>tilt.style.transform='rotateX(0) rotateY(0)')}
+const btn = document.getElementById('generate');
+const status = document.getElementById('status');
+const txt = document.getElementById('statusText');
+const bar = document.getElementById('bar');
+
+async function waitForVideo(requestId) {
+  while (true) {
+    await new Promise(resolve => setTimeout(resolve, 4000));
+
+    const response = await fetch(
+      `/api/status?requestId=${encodeURIComponent(requestId)}`
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Erreur pendant la génération.');
+    }
+
+    if (data.status === 'COMPLETED') {
+      return data.video;
+    }
+
+    txt.textContent =
+      data.status === 'IN_PROGRESS'
+        ? 'Génération de la vidéo…'
+        : 'Vidéo en attente de traitement…';
+
+    bar.style.width = '70%';
+  }
+}
+
+btn.addEventListener('click', async () => {
+  const prompt = document.getElementById('prompt').value.trim();
+
+  if (!prompt) {
+    alert('Écris d’abord une description de ta vidéo.');
+    return;
+  }
+
+  btn.disabled = true;
+  status.style.display = 'block';
+  txt.textContent = 'Envoi à Apsiy Ai…';
+  bar.style.width = '20%';
+
+  try {
+    const response = await fetch('/api/generate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ prompt })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Impossible de lancer la génération.');
+    }
+
+    txt.textContent = 'Génération IA lancée…';
+    bar.style.width = '45%';
+
+    const videoUrl = await waitForVideo(data.requestId);
+
+    if (!videoUrl) {
+      throw new Error('La vidéo est terminée mais aucun lien n’a été reçu.');
+    }
+
+    txt.innerHTML =
+      `Vidéo prête ✦ <a href="${videoUrl}" target="_blank" rel="noopener">Voir la vidéo</a>`;
+
+    bar.style.width = '100%';
+  } catch (error) {
+    console.error(error);
+    txt.textContent = 'Erreur : ' + error.message;
+    bar.style.width = '100%';
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+const tilt = document.getElementById('tilt');
+
+if (window.matchMedia('(pointer:fine)').matches) {
+  tilt.addEventListener('mousemove', e => {
+    const r = tilt.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width - 0.5;
+    const y = (e.clientY - r.top) / r.height - 0.5;
+
+    tilt.style.transform =
+      `rotateX(${-y * 5}deg) rotateY(${x * 6}deg) translateZ(0)`;
+  });
+
+  tilt.addEventListener('mouseleave', () => {
+    tilt.style.transform = 'rotateX(0) rotateY(0)';
+  });
+}
 </script>
 </body></html>
