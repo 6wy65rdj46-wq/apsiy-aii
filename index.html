@@ -167,5 +167,32 @@ if (window.matchMedia('(pointer:fine)').matches) {
   const supabaseClient = supabase.createClient(
     SUPABASE_URL,
     SUPABASE_PUBLISHABLE_KEY
-  );
+ 
+);
+  const accountBtn = document.getElementById('accountBtn');
+
+accountBtn.addEventListener('click', async (e) => {
+  e.preventDefault();
+
+  const { data: { session } } = await supabaseClient.auth.getSession();
+
+  if (session) {
+    await supabaseClient.auth.signOut();
+    accountBtn.textContent = 'Connexion';
+    document.getElementById('creditsDisplay').textContent = '0 crédits';
+  } else {
+    const email = prompt('Entre ton adresse email :');
+    if (!email) return;
+
+    const { error } = await supabaseClient.auth.signInWithOtp({
+      email: email
+    });
+
+    if (error) {
+      alert('Erreur : ' + error.message);
+    } else {
+      alert('Un lien de connexion a été envoyé à ton email.');
+    }
+  }
+});
 </script></body></html>
