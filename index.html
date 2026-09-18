@@ -157,4 +157,15 @@ if (window.matchMedia('(pointer:fine)').matches) {
   });
 }
 </script>
-</body></html>
+
+ <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  const SUPABASE_URL = "https://ecpyezbpnoezmhwrwaeb.supabase.co";
+  const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_67ScW4bGFtMJAPLLLY44Og_es1AWq7D";
+
+  const supabaseClient = supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+  );
+</script></body></html>
