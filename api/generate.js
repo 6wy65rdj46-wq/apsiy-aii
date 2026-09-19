@@ -38,7 +38,7 @@ export default async function handler(req, res) {
     console.error(error);
 
     return res.status(500).json({
-      error: "Impossible de lancer la génération vidéo.",
+      error: error?.message || String(error),
     });
   }
 }
